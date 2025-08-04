@@ -24,17 +24,18 @@ library;
 
 import 'dart:async';
 import 'dart:core';
+import 'dart:io' show Platform;
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' as foundation;
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/services.dart';
 import 'package:flutter_sound_platform_interface/flutter_sound_recorder_platform_interface.dart';
 import 'package:logger/logger.dart' show Level, Logger;
 import 'package:path/path.dart' as p;
 import 'package:synchronized/synchronized.dart';
-import 'package:flutter/foundation.dart' as foundation;
+
 import '../flutter_sound.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/services.dart';
-import 'dart:io' show Platform;
 
 /// A Recorder is an object that can record to various destinations.
 ///
@@ -278,8 +279,7 @@ class FlutterSoundRecorder implements FlutterSoundRecorderCallback {
     _logger.d('---> openRecorderCompleted: $success');
 
     _recorderState = RecorderState.values[state!];
-    _isInited =
-        success! ? Initialized.fullyInitialized : Initialized.notInitialized;
+    _isInited = success! ? Initialized.fullyInitialized : Initialized.notInitialized;
     if (success) {
       _openRecorderCompleter!.complete(this);
     } else {
@@ -757,12 +757,9 @@ class FlutterSoundRecorder implements FlutterSoundRecorderCallback {
     _logger.d('FS:---> startRecorder ');
 
     if ((codec == Codec.pcm16 || codec == Codec.pcmFloat32) &&
-        (toStream != null ||
-            toStreamFloat32 != null ||
-            toStreamInt16 != null) &&
+        (toStream != null || toStreamFloat32 != null || toStreamInt16 != null) &&
         (!kIsWeb) &&
-        Platform
-            .isIOS) // This hack is just to have recorder to stream working correctly.
+        Platform.isIOS) // This hack is just to have recorder to stream working correctly.
     {
       FlutterSoundRecorder recorder = FlutterSoundRecorder();
       await recorder.openRecorder();
@@ -880,14 +877,13 @@ class FlutterSoundRecorder implements FlutterSoundRecorderCallback {
         sampleRate: sampleRate,
         numChannels: numChannels,
         interleaved: (toStreamFloat32 == null && toStreamInt16 == null),
-        toStream: (toStream != null ||
-            toStreamFloat32 != null ||
-            toStreamInt16 != null),
+        toStream: (toStream != null || toStreamFloat32 != null || toStreamInt16 != null),
         bitRate: bitRate,
         bufferSize: bufferSize,
         enableVoiceProcessing: enableVoiceProcessing,
         codec: codec,
-        timeSlice: Duration.zero, // Not used anymore
+        timeSlice: Duration.zero,
+        // Not used anymore
         audioSource: audioSource,
       );
       _recorderState = RecorderState.isRecording;

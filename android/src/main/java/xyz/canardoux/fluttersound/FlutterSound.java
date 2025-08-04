@@ -18,47 +18,41 @@ package xyz.canardoux.fluttersound;
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import android.app.Activity;
-import android.content.Context;
 import androidx.annotation.NonNull;
-import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
-//import io.flutter.plugin.common.PluginRegistry.Registrar;
+
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.embedding.engine.plugins.activity.ActivityAware;
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
-
 import xyz.canardoux.TauEngine.Flauto;
 
 public class FlutterSound
-	implements FlutterPlugin,
-	           ActivityAware
-{
-	FlutterPlugin.FlutterPluginBinding pluginBinding;
+        implements FlutterPlugin,
+        ActivityAware {
+    FlutterPlugin.FlutterPluginBinding pluginBinding;
 
-	@Override
-	public void onAttachedToEngine ( FlutterPlugin.FlutterPluginBinding binding )
-	{
-		this.pluginBinding = binding;
+    @Override
+    public void onAttachedToEngine(FlutterPlugin.FlutterPluginBinding binding) {
+        this.pluginBinding = binding;
 
-		new MethodChannel(binding.getBinaryMessenger(), "xyz.canardoux.flutter_sound_bgservice").setMethodCallHandler(new MethodCallHandler() {
-			@Override
-			public void onMethodCall ( final MethodCall call, final Result result )
-			{
-				if (call.method.equals("setBGService")) {
-					attachFlauto();
-				}
-				result.success(0);
-			}
-		});
-	}
+        new MethodChannel(binding.getBinaryMessenger(), "xyz.canardoux.flutter_sound_bgservice").setMethodCallHandler(new MethodCallHandler() {
+            @Override
+            public void onMethodCall(final MethodCall call, final Result result) {
+                if (call.method.equals("setBGService")) {
+                    attachFlauto();
+                }
+                result.success(0);
+            }
+        });
+    }
 
 
-	/**
-	 * Plugin registration.
-	 */
+    /**
+     * Plugin registration.
+     */
 	/*
 	public static void registerWith ( Registrar registrar )
 	{
@@ -73,49 +67,42 @@ public class FlutterSound
 	}
 
 	 */
+    @Override
+    public void onDetachedFromEngine(FlutterPlugin.FlutterPluginBinding binding) {
+    }
 
+    @Override
+    public void onDetachedFromActivity() {
+        //Flauto.androidActivity = null;
+    }
 
-	@Override
-	public void onDetachedFromEngine ( FlutterPlugin.FlutterPluginBinding binding )
-	{
-	}
+    @Override
+    public void onReattachedToActivityForConfigChanges(
+            @NonNull
+            ActivityPluginBinding binding
+    ) {
+        //Flauto.androidActivity = binding.getActivity ();
+    }
 
-	@Override
-	public void onDetachedFromActivity ()
-	{
-		//Flauto.androidActivity = null;
-	}
+    @Override
+    public void onDetachedFromActivityForConfigChanges() {
+        //Flauto.androidActivity = null;
+    }
 
-	@Override
-	public void onReattachedToActivityForConfigChanges (
-		@NonNull
-			ActivityPluginBinding binding
-	                                                   )
-	{
-		//Flauto.androidActivity = binding.getActivity ();
-	}
+    @Override
+    public void onAttachedToActivity(
+            @NonNull
+            ActivityPluginBinding binding
+    ) {
+        //Flauto.androidActivity = binding.getActivity ();
+        attachFlauto();
+    }
 
-	@Override
-	public void onDetachedFromActivityForConfigChanges ()
-	{
-		//Flauto.androidActivity = null;
-	}
-
-	@Override
-	public void onAttachedToActivity (
-			@NonNull
-			ActivityPluginBinding binding
-	)
-	{
-		//Flauto.androidActivity = binding.getActivity ();
-		attachFlauto();
-	}
-
-	public void attachFlauto() {
-		Flauto.androidContext = pluginBinding.getApplicationContext ();
-		FlutterSoundPlayerManager.attachFlautoPlayer ( Flauto.androidContext, pluginBinding.getBinaryMessenger () );
-		FlutterSoundRecorderManager.attachFlautoRecorder ( Flauto.androidContext, pluginBinding.getBinaryMessenger () );
-	}
+    public void attachFlauto() {
+        Flauto.androidContext = pluginBinding.getApplicationContext();
+        FlutterSoundPlayerManager.attachFlautoPlayer(Flauto.androidContext, pluginBinding.getBinaryMessenger());
+        FlutterSoundRecorderManager.attachFlautoRecorder(Flauto.androidContext, pluginBinding.getBinaryMessenger());
+    }
 
 
 }

@@ -20,6 +20,7 @@ package xyz.canardoux.fluttersound;
 
 
 import android.content.Context;
+import android.content.ServiceConnection;
 
 import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.MethodCall;
@@ -29,130 +30,78 @@ import io.flutter.plugin.common.MethodChannel.Result;
 
 
 class FlutterSoundRecorderManager extends FlutterSoundManager
-        implements MethodCallHandler
-{
+        implements MethodCallHandler {
 
-        static Context              androidContext;
-        static FlutterSoundRecorderManager flutterSoundRecorderPlugin; // singleton
+    static Context androidContext;
+    static FlutterSoundRecorderManager flutterSoundRecorderPlugin;
 
-
-        static final String ERR_UNKNOWN               = "ERR_UNKNOWN";
-        static final String ERR_RECORDER_IS_NULL      = "ERR_RECORDER_IS_NULL";
-        static final String ERR_RECORDER_IS_RECORDING = "ERR_RECORDER_IS_RECORDING";
+    static final String ERR_UNKNOWN = "ERR_UNKNOWN";
+    static final String ERR_RECORDER_IS_NULL = "ERR_RECORDER_IS_NULL";
+    static final String ERR_RECORDER_IS_RECORDING = "ERR_RECORDER_IS_RECORDING";
 
 
-        public static void attachFlautoRecorder ( Context ctx, BinaryMessenger messenger )
-        {
-                if (flutterSoundRecorderPlugin == null) {
-                        flutterSoundRecorderPlugin = new FlutterSoundRecorderManager();
-                }
-                MethodChannel channel = new MethodChannel ( messenger, "xyz.canardoux.flutter_sound_recorder" );
-                flutterSoundRecorderPlugin.init( channel);
-                channel.setMethodCallHandler ( flutterSoundRecorderPlugin );
-                androidContext = ctx;
+    public static void attachFlautoRecorder(Context ctx, BinaryMessenger messenger) {
+        if (flutterSoundRecorderPlugin == null) {
+            flutterSoundRecorderPlugin = new FlutterSoundRecorderManager();
+        }
+        MethodChannel channel = new MethodChannel(messenger, "xyz.canardoux.flutter_sound_recorder");
+        flutterSoundRecorderPlugin.init(channel);
+        channel.setMethodCallHandler(flutterSoundRecorderPlugin);
+        androidContext = ctx;
+    }
+
+
+    FlutterSoundRecorderManager getManager() {
+        return flutterSoundRecorderPlugin;
+    }
+
+
+    @Override
+    public void onMethodCall(final MethodCall call, final Result result) {
+        switch (call.method) {
+            case "resetPlugin": {
+                resetPlugin(call, result);
+                return;
+            }
         }
 
+        FlutterSoundRecorder aRecorder = (FlutterSoundRecorder) getSession(call);
 
+        switch (call.method) {
+            case "openRecorder": {
+                aRecorder = new FlutterSoundRecorder(call);
+                initSession(call, aRecorder);
+                aRecorder.openRecorder(call, result);
+                FlutterSoundRecorderService.startService(androidContext);
+                FlutterSoundRecorderService.onMethodCall(call, result, aRecorder);
+            }
+            break;
+            case "closeRecorder": {
+                FlutterSoundRecorderService.onMethodCall(call, result, aRecorder);
+                aRecorder.closeRecorder(call, result);
+                FlutterSoundRecorderService.stopService(androidContext);
+            }
+            break;
 
-        FlutterSoundRecorderManager getManager ()
-        {
-                return flutterSoundRecorderPlugin;
+            case "startRecorder":
+            case "stopRecorder":
+            case "setSubscriptionDuration":
+            case "pauseRecorder":
+            case "resumeRecorder":
+            case "getRecordURL":
+            case "deleteRecord":
+            case "setLogLevel":
+            case "isEncoderSupported": {
+                FlutterSoundRecorderService.onMethodCall(call, result, aRecorder);
+            }
+            break;
+
+            default: {
+                result.notImplemented();
+            }
+            break;
         }
-
-
-        @Override
-        public void onMethodCall ( final MethodCall call, final Result result )
-        {
-                switch ( call.method )
-                {
-                        case "resetPlugin":
-                        {
-                                resetPlugin(call, result);
-                                return;
-                        }
-                }
-
-                FlutterSoundRecorder aRecorder = (FlutterSoundRecorder) getSession( call);
-                switch ( call.method )
-                {
-                        case "openRecorder":
-                        {
-                                aRecorder = new FlutterSoundRecorder ( call );
-                                initSession( call, aRecorder );
-                                aRecorder.openRecorder ( call, result );
-                        }
-                        break;
-
-                        case "closeRecorder":
-                        {
-                                aRecorder.closeRecorder ( call, result );
-                        }
-                        break;
-
-                        case "isEncoderSupported":
-                        {
-                                aRecorder.isEncoderSupported ( call, result );
-                        }
-                        break;
-
-
-                        case "startRecorder":
-                        {
-                                aRecorder.startRecorder ( call, result );
-                        }
-                        break;
-
-                        case "stopRecorder":
-                        {
-                                aRecorder.stopRecorder ( call, result );
-                        }
-                        break;
-
-
-                        case "setSubscriptionDuration":
-                        {
-                                aRecorder.setSubscriptionDuration ( call, result );
-                        }
-                        break;
-
-                        case "pauseRecorder":
-                        {
-                                aRecorder.pauseRecorder ( call, result );
-                        }
-                        break;
-
-
-                        case "resumeRecorder":
-                        {
-                                aRecorder.resumeRecorder ( call, result );
-                        }
-                        break;
-
-                        case "getRecordURL":
-                        {
-                                aRecorder.getRecordURL ( call, result );
-                        }
-                        break;
-
-                        case "deleteRecord":
-                        {
-                                aRecorder.deleteRecord ( call, result );
-                        }
-                        break;
-
-                        case "setLogLevel":
-                        {
-                                aRecorder.setLogLevel ( call, result );
-                        }
-                        break;
-
-                        default:
-                        {
-                                result.notImplemented ();
-                        }
-                        break;
-                }
-        }
+    }
 
 }
 
